@@ -6,6 +6,7 @@ import torch.nn.functional as F
 from sklearn.metrics import matthews_corrcoef # CoLA metrics
 
 from utils import *
+from models import *
 import argparse
 
 import os
@@ -44,9 +45,9 @@ def train(model, train_dataset, valid_dataset, args):
             x_train['input_ids'] = x_train['input_ids'].to(args.device)
             x_train['attention_mask'] = x_train['attention_mask'].to(args.device)
             if 'token_type_ids' in x_train: # TODO : WiC Task에서 작동하는지 확인
-                x_train['token_type_ids'] = x_train['attention_mask'].to(args.device)
+                x_train['token_type_ids'] = x_train['token_type_ids'].to(args.device)
             y_train = y_train.to(args.device)
-            out = model(input_ids=x_train['input_ids'], attention_mask=x_train['attention_mask'], labels=y_train)
+            out = model(input_ids=x_train['input_ids'], attention_mask=x_train['attention_mask'], token_type_ids=x_train['token_type_ids'], labels=y_train)
             loss, logits = out.loss, out.logits
             pred = torch.argmax(F.softmax(logits, dim=1), dim=1)
 
@@ -85,8 +86,10 @@ def train(model, train_dataset, valid_dataset, args):
             optimizer.zero_grad()
             x_valid['input_ids'] = x_valid['input_ids'].to(args.device)
             x_valid['attention_mask'] = x_valid['attention_mask'].to(args.device)
+            if 'token_type_ids' in x_valid: # TODO : WiC Task에서 작동하는지 확인
+                x_valid['token_type_ids'] = x_valid['attention_mask'].to(args.device)
             y_valid = y_valid.to(args.device)
-            out = model(input_ids=x_valid['input_ids'], attention_mask=x_valid['attention_mask'], labels=y_valid)
+            out = model(input_ids=x_valid['input_ids'], attention_mask=x_valid['attention_mask'],labels=y_valid)
             loss, logits = out.loss, out.logits
             pred = torch.argmax(F.softmax(logits, dim=1), dim=1)
             correct = pred.eq(y_valid)
